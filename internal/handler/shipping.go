@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"github.com/ashkan-maleki/go-r-api-idempotent/internal/db/pg/redis"
 	"github.com/ashkan-maleki/go-r-api-idempotent/internal/service"
 	"github.com/ashkan-maleki/go-r-api-idempotent/pkg/entity"
 	"github.com/gofiber/fiber/v2"
@@ -9,11 +10,12 @@ import (
 )
 
 type ShippingHandler struct {
-	ShippingRepository *service.Shipping
+	ShippingRepository  *service.Shipping
+	ShippingIdempotency *redis.Redis[entity.ShippingOrder]
 }
 
-func NewShippingHandler(shippingRepository *service.Shipping) *ShippingHandler {
-	return &ShippingHandler{ShippingRepository: shippingRepository}
+func NewShippingHandler(shippingRepository *service.Shipping, shippingIdempotency *redis.Redis[entity.ShippingOrder]) *ShippingHandler {
+	return &ShippingHandler{ShippingRepository: shippingRepository, ShippingIdempotency: shippingIdempotency}
 }
 
 type PlaceShippingOrderRequest struct {
@@ -23,11 +25,24 @@ type PlaceShippingOrderRequest struct {
 }
 
 func (s *ShippingHandler) Order(c *fiber.Ctx) error {
-	<-time.After(time.Second * 2)
 	var request PlaceShippingOrderRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
+
+	shippingOrder, exists, err := s.ShippingIdempotency.Start(context.Background(), request.OrderID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	if exists {
+		return c.Status(fiber.StatusOK).JSON(map[string]any{
+			"ok":          true,
+			"shipping_id": shippingOrder.ID,
+		})
+	}
+
+	<-time.After(time.Second * 2)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -39,6 +54,11 @@ func (s *ShippingHandler) Order(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
+
+	if err := s.ShippingIdempotency.Store(context.Background(), createdOrder.OrderID, createdOrder); err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(map[string]any{
 		"ok":          true,
 		"shipping_id": createdOrder.ID,
