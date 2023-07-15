@@ -11,6 +11,9 @@ tidy:
 run: pull
 	go run cmd/main.go
 
+
+pull-tidy: pull tidy
+
 #===============================
 # Git commands
 #===============================
@@ -23,3 +26,4 @@ commit:
 pull:
 	git fetch
 	git pull
+
