@@ -10,8 +10,11 @@ type Shipping struct {
 	db *gorm.DB
 }
 
-func NewShipping(db *gorm.DB) *Shipping {
-	return &Shipping{db: db}
+func NewShipping(db *gorm.DB) (*Shipping, error) {
+	if err := db.AutoMigrate(&entity.ShippingOrder{}); err != nil {
+		return nil, err
+	}
+	return &Shipping{db: db}, nil
 }
 
 func (s *Shipping) Save(ctx context.Context, order entity.ShippingOrder) (entity.ShippingOrder, error) {
