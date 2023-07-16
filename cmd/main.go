@@ -21,7 +21,10 @@ func main() {
 		panic(err)
 	}
 
-	shippingIdempotency := idempotency.NewRedis[entity.ShippingOrder](config.RedisUrl)
+	shippingIdempotency, err := idempotency.NewRedis[entity.ShippingOrder](config.RedisUrl)
+	if err != nil {
+		panic(err)
+	}
 
 	shippingHandler := handler.NewShippingHandler(shippingRepo, shippingIdempotency)
 

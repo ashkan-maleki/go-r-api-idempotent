@@ -3,6 +3,7 @@ package idempotency
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -10,10 +11,13 @@ type Redis[T any] struct {
 	client *redis.Client
 }
 
-func NewRedis[T any](redisUrl string) *Redis[T] {
-	opt, _ := redis.ParseURL(redisUrl)
+func NewRedis[T any](redisUrl string) (*Redis[T], error) {
+	opt, err := redis.ParseURL(redisUrl)
+	if err != nil {
+		return nil, fmt.Errorf("NewRedis: url parsing failed: %w", err)
+	}
 	rdb := redis.NewClient(opt)
-	return &Redis[T]{client: rdb}
+	return &Redis[T]{client: rdb}, nil
 }
 
 // Start returns the executed result and true if the idempotency key is already executed. Otherwise, returns empty T and false
