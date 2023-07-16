@@ -42,7 +42,7 @@ func (s *ShippingHandler) Order(c *fiber.Ctx) error {
 		})
 	}
 
-	<-time.After(time.Second * 2)
+	<-time.After(time.Second * 3)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
