@@ -1,4 +1,4 @@
-package redis
+package idempotency
 
 import (
 	"context"

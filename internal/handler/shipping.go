@@ -2,19 +2,19 @@ package handler
 
 import (
 	"context"
-	"github.com/ashkan-maleki/go-r-api-idempotent/internal/db/pg/redis"
-	"github.com/ashkan-maleki/go-r-api-idempotent/internal/service"
+	"github.com/ashkan-maleki/go-r-api-idempotent/internal/repo"
+	"github.com/ashkan-maleki/go-r-api-idempotent/internal/service/idempotency"
 	"github.com/ashkan-maleki/go-r-api-idempotent/pkg/entity"
 	"github.com/gofiber/fiber/v2"
 	"time"
 )
 
 type ShippingHandler struct {
-	ShippingRepository  *service.Shipping
-	ShippingIdempotency *redis.Redis[entity.ShippingOrder]
+	ShippingRepository  *repo.Shipping
+	ShippingIdempotency *idempotency.Redis[entity.ShippingOrder]
 }
 
-func NewShippingHandler(shippingRepository *service.Shipping, shippingIdempotency *redis.Redis[entity.ShippingOrder]) *ShippingHandler {
+func NewShippingHandler(shippingRepository *repo.Shipping, shippingIdempotency *idempotency.Redis[entity.ShippingOrder]) *ShippingHandler {
 	return &ShippingHandler{ShippingRepository: shippingRepository, ShippingIdempotency: shippingIdempotency}
 }
 

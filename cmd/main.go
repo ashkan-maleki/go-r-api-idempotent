@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/ashkan-maleki/go-r-api-idempotent/cmd/config"
 	"github.com/ashkan-maleki/go-r-api-idempotent/internal/db/pg"
-	"github.com/ashkan-maleki/go-r-api-idempotent/internal/db/pg/redis"
 	"github.com/ashkan-maleki/go-r-api-idempotent/internal/handler"
-	"github.com/ashkan-maleki/go-r-api-idempotent/internal/service"
+	"github.com/ashkan-maleki/go-r-api-idempotent/internal/repo"
+	"github.com/ashkan-maleki/go-r-api-idempotent/internal/service/idempotency"
 	"github.com/ashkan-maleki/go-r-api-idempotent/pkg/entity"
 	"github.com/gofiber/fiber/v2"
 	"log"
@@ -16,12 +16,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	shippingRepo, err := service.NewShipping(db)
+	shippingRepo, err := repo.NewShipping(db)
 	if err != nil {
 		panic(err)
 	}
 
-	shippingIdempotency := redis.NewRedis[entity.ShippingOrder](config.RedisUrl)
+	shippingIdempotency := idempotency.NewRedis[entity.ShippingOrder](config.RedisUrl)
 
 	shippingHandler := handler.NewShippingHandler(shippingRepo, shippingIdempotency)
 
